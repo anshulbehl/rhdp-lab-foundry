@@ -80,6 +80,15 @@ This addresses the #1 pain point reported by lab facilitators: not knowing when 
 
 ## Lab Types Supported
 
-- **Zero-touch labs** (zt-*): Full infrastructure + content + automation
-- **AgnosticV catalog items**: Lightweight catalog entries referencing showroom repos
-- **Showroom-only**: Documentation + optional runtime automation
+Lab Foundry handles three distinct lab architectures differently. Each type has its own scaffolding, content generation, and validation strategy.
+
+| Concern | Zero-Touch (zt-*) | AgnosticV Catalog | Showroom-Only |
+|:--------|:-------------------|:------------------|:--------------|
+| **Content** | Lab Foundry generates directly (ZT-compatible Antora with `${guid}` envsubst, `zero-touch-site.yml`) | No content (common.yaml points to a showroom repo) | Delegates to `showroom:create-lab` (standard Antora) |
+| **Infrastructure** | Lab Foundry generates `config/instances.yaml`, `firewall.yaml`, `networks.yaml` | References infra from the showroom repo via `git_config_directory` in common.yaml | None (infra provided externally) |
+| **Setup automation** | Lab Foundry generates `setup-automation/main.yml` + per-host scripts with embedded health reporter | None (setup comes from referenced repo) | None or minimal |
+| **Runtime automation** | Lab Foundry generates `module-NN/` with shell scripts (setup/solve/validation) | None (comes from referenced repo) | Optional, delegates to `ftl:rhdp-lab-validator` |
+| **Validation** | Lab Foundry validates everything (structure, config, content, provisioning health) | Validates references resolve (git URLs, includes, component compatibility) | Delegates to `showroom:verify-content` |
+| **Catalog** | Separate step via `/foundry:deploy-lab` | This IS the catalog; delegates to `agnosticv:catalog-builder` | Separate step via `agnosticv:catalog-builder` |
+
+**Why the split?** The existing RHDP `showroom:create-lab` skill generates Antora content for standard Showroom deployments, which uses different variable substitution and site configuration than zero-touch labs. Delegating ZT content to showroom skills would produce incompatible output. Lab Foundry owns the full ZT stack and only delegates to RHDP skills for standard Showroom deployments and catalog operations.
