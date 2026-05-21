@@ -34,19 +34,36 @@ Required structure:
 
 ## Composing with RHDP Skills
 
-Lab Foundry delegates to upstream RHDP skills. Never duplicate their functionality.
+Lab Foundry delegates to upstream RHDP skills where appropriate, but handles
+ZT-specific concerns itself. The RHDP showroom skills were designed for
+standard Showroom/RHDP deployments and may generate Antora content that is
+incompatible with zero-touch labs.
 
-| Task | Delegate To |
-|:-----|:------------|
-| Generate AsciiDoc content | showroom:create-lab |
-| Create demo modules | showroom:create-demo |
-| Validate content quality | showroom:verify-content |
-| Build AgnosticV catalog | agnosticv:catalog-builder |
-| Validate catalog config | agnosticv:validator |
-| Generate solve/validate | ftl:rhdp-lab-validator |
-| Deployment health checks | health:deployment-validator |
+| Task | ZT Labs | Standard Showroom |
+|:-----|:--------|:------------------|
+| Generate AsciiDoc content | Lab Foundry generates ZT-compatible content directly | Delegate to showroom:create-lab |
+| Create demo modules | Lab Foundry handles (ZT-specific structure) | Delegate to showroom:create-demo |
+| Validate content quality | Lab Foundry validates ZT structure, then optionally delegate to showroom:verify-content | Delegate to showroom:verify-content |
+| Build AgnosticV catalog | Delegate to agnosticv:catalog-builder | Delegate to agnosticv:catalog-builder |
+| Validate catalog config | Delegate to agnosticv:validator | Delegate to agnosticv:validator |
+| Generate solve/validate | Delegate to ftl:rhdp-lab-validator | Delegate to ftl:rhdp-lab-validator |
+| Deployment health checks | Lab Foundry embedded reporter | Delegate to health:deployment-validator |
 
-To invoke: `Skill(skill="showroom:create-lab", args="...")`
+### Zero-Touch Antora Differences
+
+ZT labs differ from standard Showroom in several ways:
+- Use `zero-touch-site.yml` (or `default-site.yml`) instead of standard `site.yml`
+- Variables use `${guid}` and `${domain}` via envsubst, not standard Antora attributes
+- Content is served from a container init process, not a standalone Showroom deployment
+- The `antora.yml` must have an `asciidoc.attributes` section with `environment_variables`
+  for variable substitution to work
+- Runtime automation scripts (setup/solve/validation) are shell scripts, not Ansible playbooks
+  in the standard FTL sense
+
+ALWAYS generate ZT-compatible content when lab_type is zero-touch. Do NOT delegate
+content generation to showroom:create-lab for ZT labs.
+
+To invoke RHDP skills: `Skill(skill="showroom:create-lab", args="...")`
 
 If an RHDP skill is not installed, prompt the user:
 "This requires the showroom plugin. Install with: /plugin install showroom@rhdp-marketplace"
