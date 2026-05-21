@@ -1,0 +1,36 @@
+{
+    "name": "rhdp-lab-foundry",
+    "owner": {
+        "name": "Anshul Behl",
+        "email": "anshul@redhat.com"
+    },
+    "metadata": {
+        "description": "Plugin framework for forging Red Hat Demo Platform labs. Scaffolds zero-touch, AgnosticV, and Showroom labs with infrastructure design, content generation, validation, and deployment health reporting.",
+        "version": "0.1.0"
+    },
+    "plugins": [
+        {
+            "name": "foundry",
+            "source": "./foundry",
+            "description": "Scaffold and manage RHDP labs: zero-touch, AgnosticV, and Showroom. Infrastructure design, content generation, validation, and deployment health reporting.",
+            "version": "0.1.0",
+            "author": {
+                "name": "Anshul Behl",
+                "email": "anshul@redhat.com"
+            },
+            "repository": "https://github.com/anshulbehl/rhdp-lab-foundry",
+            "license": "Apache-2.0",
+            "tags": [
+                "rhdp",
+                "lab",
+                "zero-touch",
+                "agnosticv",
+                "showroom",
+                "ansible",
+                "openshift",
+                "workshop",
+                "infrastructure"
+            ]
+        }
+    ]
+}
