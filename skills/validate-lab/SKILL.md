@@ -31,8 +31,17 @@ Verify the lab has all required files for its type.
 
 **AgnosticV requirements:**
 - [ ] common.yaml exists and has env_type, cloud_provider
+- [ ] common.yaml: git_config_directory URL is reachable (fetch test)
+- [ ] common.yaml: referenced content repo's config/instances.yaml parses correctly
+- [ ] common.yaml: #include directives reference existing files
+- [ ] common.yaml: __meta__.components reference valid catalog items
 - [ ] dev.yaml exists
 - [ ] description.adoc exists
+- [ ] If using base-component: verify base-component version hasn't introduced breaking changes
+
+This is critical because the RHDP team sometimes pushes changes to shared components
+(like base-component or includes/) without lab developer review, breaking downstream labs.
+The validate stage catches this by verifying all references still resolve.
 
 **Showroom-only requirements:**
 - [ ] content/antora.yml exists
