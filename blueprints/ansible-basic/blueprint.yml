@@ -1,0 +1,69 @@
+---
+name: ansible-basic
+description: Standard Ansible Automation Platform lab with controller, 2 RHEL nodes, and Gitea
+product: ansible
+lab_type: zero-touch
+
+virtualmachines:
+  - name: control
+    image: base-zero-aap-2.5-container-ce
+    memory: 16Gi
+    cores: 4
+    image_size: 50Gi
+    services:
+      - name: aap-https
+        port: 443
+      - name: aap-http
+        port: 80
+    routes:
+      - name: aap-controller
+        service: aap-https
+        target_port: 443
+        tls: Reencrypt
+    tags:
+      AnsibleGroup: control
+
+  - name: rhel-1
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+  - name: rhel-2
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+containers:
+  - name: gitea
+    image: docker.io/gitea/gitea:1.16.8-rootless
+    ports:
+      - 3000
+    environment:
+      - name: GITEA__webhook__ALLOWED_HOST_LIST
+        value: "*"
+    services:
+      - name: gitea
+        port: 3000
+    routes:
+      - name: gitea
+        service: gitea
+        target_port: 3000
+        tls: Edge
+
+ingress_ports:
+  - 3000  # Gitea
+
+tabs:
+  - name: AAP Controller
+    url: "https://control-${guid}.${domain}"
+  - name: Gitea
+    url: "https://gitea-${guid}.${domain}"
+
+total_memory: 28Gi
+total_cores: 8

@@ -1,0 +1,133 @@
+---
+name: ansible-aiops
+description: AIOps lab with AAP, EDA, RHEL AI, Splunk, Mattermost, and dashboard
+product: ansible
+lab_type: zero-touch
+
+virtualmachines:
+  - name: control
+    image: base-zero-aap-2.5-container-ce
+    memory: 16Gi
+    cores: 4
+    image_size: 50Gi
+    services:
+      - name: aap-https
+        port: 443
+      - name: aap-http
+        port: 80
+    routes:
+      - name: aap-controller
+        service: aap-https
+        target_port: 443
+        tls: Reencrypt
+    tags:
+      AnsibleGroup: control
+
+  - name: rhel-ai
+    image: rhel-ai-94
+    memory: 16Gi
+    cores: 4
+    image_size: 100Gi
+    services:
+      - name: inference
+        port: 8443
+    routes:
+      - name: rhel-ai
+        service: inference
+        target_port: 8443
+        tls: Edge
+    tags:
+      AnsibleGroup: ai
+
+  - name: rhel-1
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+containers:
+  - name: gitea
+    image: docker.io/gitea/gitea:1.16.8-rootless
+    ports:
+      - 3000
+    environment:
+      - name: GITEA__webhook__ALLOWED_HOST_LIST
+        value: "*"
+    services:
+      - name: gitea
+        port: 3000
+    routes:
+      - name: gitea
+        service: gitea
+        target_port: 3000
+        tls: Edge
+
+  - name: kafka
+    image: docker.io/apache/kafka:latest
+    ports:
+      - 9092
+    services:
+      - name: kafka
+        port: 9092
+
+  - name: mattermost
+    image: docker.io/mattermost/mattermost-team-edition:latest
+    ports:
+      - 8065
+    services:
+      - name: mattermost
+        port: 8065
+    routes:
+      - name: mattermost
+        service: mattermost
+        target_port: 8065
+        tls: Edge
+
+  - name: splunk
+    image: docker.io/splunk/splunk:latest
+    ports:
+      - 8000
+      - 8088
+      - 8089
+    environment:
+      - name: SPLUNK_GENERAL_TERMS
+        value: "--accept-sgt-current-at-splunk-com"
+      - name: SPLUNK_START_ARGS
+        value: "--accept-license"
+      - name: SPLUNK_PASSWORD
+        value: "RedHat123!"
+    services:
+      - name: splunk-web
+        port: 8000
+      - name: splunk-hec
+        port: 8088
+    routes:
+      - name: splunk
+        service: splunk-web
+        target_port: 8000
+        tls: Edge
+
+ingress_ports:
+  - 3000  # Gitea
+  - 8000  # Splunk
+  - 8065  # Mattermost
+  - 8088  # Splunk HEC
+  - 8443  # RHEL AI
+  - 9092  # Kafka
+
+tabs:
+  - name: AAP Controller
+    url: "https://control-${guid}.${domain}"
+  - name: Gitea
+    url: "https://gitea-${guid}.${domain}"
+  - name: Splunk
+    url: "https://splunk-${guid}.${domain}"
+  - name: Mattermost
+    url: "https://mattermost-${guid}.${domain}"
+  - name: RHEL AI
+    url: "https://rhel-ai-${guid}.${domain}"
+
+total_memory: 40Gi
+total_cores: 10

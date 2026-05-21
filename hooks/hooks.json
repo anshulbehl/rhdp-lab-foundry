@@ -1,0 +1,18 @@
+{
+  "description": "RHDP Lab Foundry - detects lab projects and checks for RHDP skill dependencies",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "LAB_TYPE=''; if [ -f 'config/instances.yaml' ] && [ -f 'ui-config.yml' ]; then LAB_TYPE='zero-touch'; elif [ -f 'common.yaml' ] && [ -f 'dev.yaml' ]; then LAB_TYPE='agnosticv'; elif [ -f 'ui-config.yml' ] && [ -d 'content' ]; then LAB_TYPE='showroom-only'; elif [[ \"$(basename $PWD)\" == zt-* ]]; then LAB_TYPE='zero-touch'; fi; if [ -n \"$LAB_TYPE\" ]; then echo \"{\\\"continue\\\":true,\\\"suppressOutput\\\":false,\\\"status\\\":\\\"Lab Foundry: detected $LAB_TYPE lab project. /foundry skills available.\\\"}\"; else echo '{\"continue\":true,\"suppressOutput\":true}'; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

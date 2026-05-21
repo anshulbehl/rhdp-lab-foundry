@@ -1,0 +1,19 @@
+{
+  "name": "rhdp-lab-foundry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin for forging RHDP labs. Scaffolds zero-touch, AgnosticV, and Showroom labs with infrastructure design, content generation, validation, and deployment health reporting.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "rhdp",
+    "lab",
+    "zero-touch",
+    "agnosticv",
+    "showroom",
+    "ansible",
+    "openshift"
+  ]
+}
