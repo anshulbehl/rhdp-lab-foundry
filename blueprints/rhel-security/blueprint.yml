@@ -1,0 +1,70 @@
+---
+name: rhel-security
+description: RHEL security lab with control node and managed nodes for security automation (SELinux, Keylime, USBGuard, compliance)
+product: rhel
+lab_type: zero-touch
+
+virtualmachines:
+  - name: control
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    services:
+      - name: ssh
+        port: 22
+      - name: cockpit
+        port: 9090
+    routes:
+      - name: cockpit
+        service: cockpit
+        target_port: 9090
+        tls: Edge
+    tags:
+      AnsibleGroup: control
+
+  - name: rhel-1
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+  - name: rhel-2
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+containers:
+  - name: gitea
+    image: docker.io/gitea/gitea:1.16.8-rootless
+    ports:
+      - 3000
+    environment:
+      - name: GITEA__webhook__ALLOWED_HOST_LIST
+        value: "*"
+    services:
+      - name: gitea
+        port: 3000
+    routes:
+      - name: gitea
+        service: gitea
+        target_port: 3000
+        tls: Edge
+
+ingress_ports:
+  - 3000  # Gitea
+  - 9090  # Cockpit
+
+tabs:
+  - name: Cockpit
+    url: "https://cockpit-${guid}.${domain}"
+  - name: Gitea
+    url: "https://gitea-${guid}.${domain}"
+
+total_memory: 12Gi
+total_cores: 6

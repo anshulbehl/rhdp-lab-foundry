@@ -1,0 +1,137 @@
+---
+name: ansible-eda
+description: Event-Driven Ansible lab with AAP controller, EDA controller, Kafka event bus, observability integration, and Mattermost for ChatOps
+product: ansible
+lab_type: zero-touch
+
+virtualmachines:
+  - name: control
+    image: base-zero-aap-2.5-container-ce
+    memory: 16Gi
+    cores: 4
+    image_size: 50Gi
+    services:
+      - name: aap-https
+        port: 443
+      - name: aap-http
+        port: 80
+    routes:
+      - name: aap-controller
+        service: aap-https
+        target_port: 443
+        tls: Reencrypt
+    tags:
+      AnsibleGroup: control
+
+  - name: rhel-1
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+  - name: rhel-2
+    image: rhel93
+    memory: 4Gi
+    cores: 2
+    image_size: 30Gi
+    tags:
+      AnsibleGroup: managed_nodes
+
+containers:
+  - name: gitea
+    image: docker.io/gitea/gitea:1.16.8-rootless
+    ports:
+      - 3000
+    environment:
+      - name: GITEA__webhook__ALLOWED_HOST_LIST
+        value: "*"
+    services:
+      - name: gitea
+        port: 3000
+    routes:
+      - name: gitea
+        service: gitea
+        target_port: 3000
+        tls: Edge
+
+  - name: kafka
+    image: docker.io/apache/kafka:latest
+    ports:
+      - 9092
+    environment:
+      - name: KAFKA_NODE_ID
+        value: "1"
+      - name: KAFKA_PROCESS_ROLES
+        value: broker,controller
+      - name: KAFKA_LISTENERS
+        value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@localhost:9093"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: CONTROLLER
+    services:
+      - name: kafka
+        port: 9092
+
+  - name: alertmanager
+    image: quay.io/prometheus/alertmanager:latest
+    ports:
+      - 9093
+    services:
+      - name: alertmanager
+        port: 9093
+    routes:
+      - name: alertmanager
+        service: alertmanager
+        target_port: 9093
+        tls: Edge
+
+  - name: prometheus
+    image: quay.io/prometheus/prometheus:latest
+    ports:
+      - 9090
+    services:
+      - name: prometheus
+        port: 9090
+    routes:
+      - name: prometheus
+        service: prometheus
+        target_port: 9090
+        tls: Edge
+
+  - name: mattermost
+    image: docker.io/mattermost/mattermost-team-edition:latest
+    ports:
+      - 8065
+    services:
+      - name: mattermost
+        port: 8065
+    routes:
+      - name: mattermost
+        service: mattermost
+        target_port: 8065
+        tls: Edge
+
+ingress_ports:
+  - 3000   # Gitea
+  - 8065   # Mattermost
+  - 9090   # Prometheus
+  - 9092   # Kafka
+  - 9093   # Alertmanager
+
+tabs:
+  - name: AAP Controller
+    url: "https://control-${guid}.${domain}"
+  - name: Gitea
+    url: "https://gitea-${guid}.${domain}"
+  - name: Prometheus
+    url: "https://prometheus-${guid}.${domain}"
+  - name: Alertmanager
+    url: "https://alertmanager-${guid}.${domain}"
+  - name: Mattermost
+    url: "https://mattermost-${guid}.${domain}"
+
+total_memory: 32Gi
+total_cores: 8

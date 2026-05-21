@@ -9,195 +9,266 @@ model: claude-opus-4-6
 
 Create a new RHDP lab repository from scratch. Handles all three lab types and generates the full structure including infrastructure, automation, content, and validation.
 
-## Step 1: Gather Requirements
+## Interview Process
 
-Ask the user these questions (skip any they've already answered):
+The interview is organized into 5 phases. Each phase builds on the previous one. Skip questions the user has already answered. Use AskUserQuestion with appropriate options for each.
 
-1. **What is this lab about?** (one sentence description of the learning objective)
+### Phase 1: Identity and Purpose
+
+These questions determine the lab type and blueprint.
+
+1. **What is this lab about?**
+   Free text. One sentence describing the learning objective.
+   Example: "Teach operators how to use AI-driven certificate lifecycle management with Ansible"
+
 2. **Which lab type?**
-   - **Zero-touch**: Full infrastructure + content + automation (most common for hands-on labs)
-   - **AgnosticV catalog item**: Lightweight catalog entry referencing a showroom repo
-   - **Showroom-only**: Documentation + optional runtime automation (no infrastructure provisioning)
-3. **Which product(s)?** Ansible, OpenShift, RHEL, or multi-product
-4. **What services need to run?** (e.g., AAP controller, EDA, Splunk, FreeIPA, Gitea, etc.)
-5. **How many workshop modules?** (estimate, can add more later)
-6. **Target event?** Summit, roadshow, RH1, ongoing catalog, or internal training
+   Options:
+   - Zero-touch (hands-on lab with full infrastructure provisioning)
+   - AgnosticV catalog item (catalog entry referencing an existing showroom repo)
+   - Showroom-only (documentation with optional grading, no infrastructure provisioning)
 
-## Step 2: Select Blueprint
+3. **Which product family?**
+   Options:
+   - Ansible Automation Platform
+   - OpenShift
+   - RHEL
+   - Multi-product (specify which)
 
-Based on the answers, select the closest matching blueprint from the blueprints/ directory. If no blueprint matches, start from the base templates.
+4. **Target audience?**
+   Options:
+   - Customers (external hands-on lab)
+   - Partners (partner enablement)
+   - Internal (field enablement, TMM training)
+   - Developer (contributor/developer onboarding)
 
-Available blueprints:
-- `ansible-basic`: AAP 2.5 + 2 RHEL nodes + Gitea (most Ansible labs)
-- `ansible-eda`: AAP + EDA + Kafka + observability + Mattermost
-- `ansible-aiops`: AAP + EDA + RHEL AI + Splunk + dashboard
-- `openshift-basic`: OCP cluster + workloads
-- `rhel-security`: RHEL nodes + security tools
+5. **Target event or use?**
+   Options:
+   - Red Hat Summit
+   - Red Hat One / regional events
+   - Roadshow
+   - Ongoing RHDP catalog item
+   - Internal training only
+   - One-time demo
 
-If the user describes services not in any blueprint, compose from individual service definitions.
+### Phase 2: Platform and Infrastructure
 
-## Step 3: Scaffold the Repository
+These questions determine the deployment platform and base infrastructure.
 
-### For Zero-Touch Labs
+6. **Infrastructure backend?**
+   Options:
+   - OpenShift CNV (default for RHDP labs, KVM VMs on OpenShift)
+   - AWS EC2 (cloud VMs, requires cloud credentials)
+   - Documentation only (no infrastructure needed)
 
-Create the following structure:
+7. **AAP version?** (only if product is Ansible)
+   Options:
+   - AAP 2.5 (current GA, image: base-zero-aap-2.5-container-ce)
+   - AAP 2.6 (latest, image: base-zero-aap-2.6-container-ce)
+   - No AAP (RHEL-only lab)
+
+8. **RHEL version for managed nodes?**
+   Options:
+   - RHEL 9.3 (image: rhel93)
+   - RHEL 9.4 (image: rhel-9.4)
+   - RHEL 10.0 (image: rhel-10-0-07-09-25-3)
+   - RHEL 10.1 (image: rhel-10-1-04-15-26)
+   - Not applicable
+
+9. **How many managed nodes (RHEL VMs)?**
+   Options: 0, 1, 2, 3, 4+
+
+10. **Need Windows nodes?**
+    Options:
+    - No
+    - Yes, 1 Windows Server
+    - Yes, 2 Windows Servers
+
+11. **Need network devices?** (routers, switches)
+    Options:
+    - No
+    - Arista (cEOS containers)
+    - Cisco (IOSv or CSR containers)
+    - Both
+
+### Phase 3: Services and Integrations
+
+These questions determine which containers and services to deploy.
+
+12. **Which SCM/Git service?**
+    Options:
+    - Gitea (default, lightweight, recommended)
+    - None (use external GitHub)
+
+13. **Need Event-Driven Ansible (EDA)?**
+    Options:
+    - No
+    - Yes, with Kafka event bus
+    - Yes, with webhook sources only (no Kafka)
+
+14. **Observability/monitoring integration?**
+    Options (multi-select):
+    - None
+    - Prometheus + Alertmanager
+    - Splunk (with HEC)
+    - Dynatrace
+    - IBM Instana
+    - Custom (specify)
+
+15. **ChatOps/notification platform?**
+    Options:
+    - None
+    - Mattermost (container, self-hosted)
+    - Slack (external, webhook only)
+
+16. **Need an AI/LLM endpoint?**
+    Options:
+    - No
+    - RHEL AI with Granite model (VM, 16GB+ RAM, GPU recommended)
+    - External LLM via API (litellm proxy, OpenAI-compatible)
+    - Both (local Granite + external fallback)
+
+17. **Need a certificate authority?**
+    Options:
+    - No
+    - FreeIPA/IDM (container)
+    - Self-signed certs only
+
+18. **Need a database?**
+    Options:
+    - No
+    - PostgreSQL (container)
+    - MySQL/MariaDB (container)
+
+19. **Need a dashboard/web app?**
+    Options:
+    - No
+    - Custom dashboard (Python FastAPI + HTML)
+    - Grafana (container)
+
+20. **Any other services?** (free text)
+    Let the user describe additional services not covered above.
+
+### Phase 4: Content and Workshop Structure
+
+21. **How many workshop modules?**
+    Options: 1-2, 3-5, 6-8, 9+
+
+22. **Module structure?**
+    Options:
+    - Guided (step-by-step instructions with copy-paste commands)
+    - Exploratory (objectives given, students figure out the approach)
+    - Mixed (some guided, some exploratory)
+
+23. **Need solve/validate grading?**
+    Options:
+    - No (documentation only)
+    - Shell script grading (traditional setup/solve/validation scripts)
+    - Ansible grading (FTL framework with solve.yml/validate.yml)
+    - Both
+
+24. **Need a Remote Desktop (RDP)?**
+    Options:
+    - No
+    - Yes, IronRDP for Windows access
+    - Yes, noVNC for Linux desktop
+
+25. **Cloud provider credentials for students?**
+    Options:
+    - None needed
+    - AWS credentials
+    - Azure credentials
+    - AWS and Azure
+    - GCP credentials
+
+### Phase 5: Operational Details
+
+26. **Lab duration?**
+    Options:
+    - 45 minutes
+    - 60 minutes (1 hour)
+    - 90 minutes
+    - 2+ hours
+    - Self-paced (no time limit)
+
+27. **Lab lifespan (how long should provisioned instances stay up)?**
+    Options:
+    - 45 minutes (default for events)
+    - 1 hour
+    - 2 hours
+    - 4 hours
+    - 8 hours (full day)
+
+28. **Multi-user support?**
+    Options:
+    - Single user per instance (default)
+    - Multiple users sharing one cluster (OCP labs)
+
+29. **LiteMaaS integration?** (for GPU/AI workloads)
+    Options:
+    - No
+    - Yes (requires LiteMaaS API keys in AgnosticV includes)
+
+30. **Provisioning health webhook?**
+    Options:
+    - No
+    - Slack channel (provide channel webhook URL)
+    - Mattermost (provide webhook URL)
+    - Custom endpoint (provide URL)
+
+## Smart Defaults
+
+Not every question needs to be asked. Use these rules to skip or auto-answer:
+
+- If product is **RHEL** (not Ansible): skip AAP version, EDA, ChatOps, AI/LLM
+- If lab type is **showroom-only**: skip all infrastructure questions (Phase 2 and 3)
+- If lab type is **agnosticv**: skip infrastructure details (they come from the referenced repo)
+- If target is **internal training**: default to 2-hour duration, 4-hour lifespan
+- If target is **Summit**: default to 45-min duration, 45-min lifespan
+- If **no EDA**: skip Kafka and observability questions
+- If **no AAP**: skip AAP version question
+- If infrastructure is **docs-only**: skip all service questions
+
+## After Interview
+
+1. Summarize the selections back to the user in a clear table
+2. Ask for confirmation before scaffolding
+3. Select the closest blueprint and customize it
+4. Generate the complete repo structure
+5. Show what was created and what to do next
+
+## Blueprint Selection Logic
+
 ```
-{lab_repo_name}/
-  config/
-    instances.yaml    # Generated from blueprint + user requirements
-    networks.yaml     # Default network config
-    firewall.yaml     # Firewall rules based on services
-  setup-automation/
-    main.yml          # Ansible playbook orchestrating setup
-    setup-control.sh  # AAP/control node setup (if applicable)
-    setup-{host}.sh   # Per-host setup stubs
-  runtime-automation/
-    main.yml          # Module orchestration
-    module-01/        # First module stubs
-      setup-control.sh
-      solve-control.sh
-      validation-control.sh
-  content/
-    antora.yml
-    modules/ROOT/
-      nav.adoc
-      pages/
-        index.adoc    # Lab overview
-        01-explore.adoc  # First module stub
-  site.yml
-  default-site.yml
-  ui-config.yml       # Showroom UI with tabs for all services
-  .foundry.yml        # Lab Foundry metadata (lab type, blueprint, services)
-  .foundry-skip       # Default skip config for validation
-  README.md
+if product == ansible:
+    if has_eda and has_ai:
+        blueprint = ansible-aiops
+    elif has_eda:
+        blueprint = ansible-eda
+    else:
+        blueprint = ansible-basic
+elif product == openshift:
+    blueprint = openshift-basic
+elif product == rhel:
+    blueprint = rhel-security
+else:
+    blueprint = None (build from scratch using service definitions)
 ```
 
-### For AgnosticV Catalog Items
+## Scaffolding
 
-Create:
-```
-{catalog_item_name}/
-  common.yaml         # env_type, cloud_provider, git references
-  dev.yaml            # Dev deployment config
-  test.yaml           # Staging config
-  prod.yaml           # Production config
-  description.adoc    # Catalog description
-  .foundry.yml
-```
+After interview and confirmation, create the repo structure as documented in the original skill definition. The key additions from the interview:
 
-### For Showroom-Only Labs
-
-Create:
-```
-{lab_repo_name}/
-  content/
-    antora.yml
-    modules/ROOT/
-      nav.adoc
-      pages/
-        index.adoc
-  runtime-automation/  # Optional, create if user wants solve/validate
-    main.yml
-  site.yml
-  ui-config.yml
-  .foundry.yml
-  README.md
-```
-
-## Step 4: Generate Infrastructure Config
-
-For zero-touch labs, generate config/instances.yaml based on the selected blueprint and user requirements.
-
-Key conventions:
-- Control node: base-zero-aap-2.5-container-ce image, 16GB RAM, 4 cores
-- RHEL nodes: rhel93 image, 4GB RAM, 2 cores
-- Containers: specify image, ports, environment, volumes
-- Routes: TLS Edge termination for web UIs
-- Gitea: always include for SCM (docker.io/gitea/gitea:1.16.8-rootless)
-- Firewall: default deny egress, explicit ingress for service ports
-
-## Step 5: Generate Setup Automation
-
-Generate setup scripts with these conventions:
-- main.yml: Uses `BASTION_HOST`, `BASTION_USER`, `BASTION_PASSWORD` environment variables
-- setup-control.sh: Configures AAP controller (if applicable) with:
-  - Wait-for-ready checks (poll controller API before configuring)
-  - Retry logic (3 retries with 10s delay for API calls)
-  - `ansible.controller` collection modules for resources
-  - Idempotent operations
-- setup-{host}.sh: Per-host configuration
-
-## Step 6: Generate Content Skeleton
-
-Create Antora content structure with:
-- antora.yml with lab metadata
-- nav.adoc with module listing
-- index.adoc with lab overview (title, objectives, architecture diagram placeholder)
-- One .adoc file per module (numbered: 01-explore.adoc, 02-configure.adoc, etc.)
-- Module stubs include: title, objectives, steps placeholder, validation section
-
-If the showroom:create-lab skill is available, offer to delegate content generation:
-"Want me to generate detailed content for each module? I'll use the showroom:create-lab skill."
-
-## Step 7: Generate Validation Stubs
-
-Create runtime-automation module directories with:
-- setup-control.sh: Module-specific setup
-- solve-control.sh: Solution script (empty stub with comment)
-- validation-control.sh: Validation script (empty stub with comment)
-
-If the ftl:rhdp-lab-validator skill is available, offer to generate full solve/validate:
-"Want me to generate solve and validate playbooks? I'll use the FTL lab validator skill."
-
-## Step 8: Generate .foundry.yml Metadata
-
-Create a metadata file that tracks what Lab Foundry knows about this lab:
-```yaml
-lab_type: zero-touch  # or agnosticv or showroom-only
-blueprint: ansible-eda  # which blueprint was used
-product: ansible
-services:
-  - name: control
-    type: vm
-    role: aap-controller
-  - name: gitea
-    type: container
-    role: scm
-modules:
-  - id: 01
-    title: Explore the Environment
-    status: stub
-validation:
-  webhook_url: ""  # Set to receive provisioning health reports
-  skip:
-    - catalog  # No AgnosticV catalog yet
-```
-
-## Step 9: Initialize Git
-
-```bash
-cd {lab_repo_name}
-git init
-git add -A
-git commit -m "Initial lab scaffold from Lab Foundry ({blueprint} blueprint)"
-```
-
-Offer to create a GitHub repo:
-"Want me to create a GitHub repo? I'll use `gh repo create`."
-
-## Step 10: Summary
-
-Display what was created:
-- Lab type and blueprint used
-- Services configured (with ports)
-- Modules created
-- What to do next (add content, configure infrastructure, set up catalog)
-- Available foundry skills for next steps
+1. **instances.yaml**: Generated from blueprint + answers to Phase 2/3 questions
+2. **firewall.yaml**: Ports derived from selected services
+3. **ui-config.yml**: Tabs for each service with a web UI
+4. **setup-automation/setup-control.sh**: AAP version-specific setup using `ansible.controller` modules
+5. **.foundry.yml**: Records all interview answers for future reference
+6. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q30)
 
 ## Important Notes
 
-- NEVER generate complete lab content in this skill. Scaffold stubs, then delegate to showroom:create-lab for actual content.
-- ALWAYS use the naming convention: zt-{product_prefix}-{description} for zero-touch labs
-- ALWAYS include .foundry.yml for tracking lab metadata
-- Setup scripts MUST include wait-for-ready and retry logic
-- Firewall rules MUST default to deny-all egress with explicit whitelist
+- NEVER skip the interview. The exhaustive question set is what makes this tool valuable.
+- For each question, show the recommended/default option first.
+- Group questions logically, don't ask all 30 at once. Use 5 phases.
+- If the user says "just like the EDA lab" or references an existing lab, read that lab's .foundry.yml or config/ to pre-populate answers.
+- Save all answers to .foundry.yml so the lab can be rebuilt or modified later.

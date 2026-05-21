@@ -1,0 +1,29 @@
+---
+name: openshift-basic
+description: Basic OpenShift lab with cluster access, sample workloads, and developer tools
+product: openshift
+lab_type: showroom-only
+
+# OpenShift labs typically use a shared or dedicated OCP cluster
+# provisioned separately, not VMs in instances.yaml.
+# This blueprint provides content structure and runtime automation only.
+
+cluster_requirements:
+  type: ocp4
+  version: "4.16+"
+  workers: 3
+  users: 1
+  namespaces_per_user: 2
+
+containers: []
+virtualmachines: []
+
+tabs:
+  - name: OpenShift Console
+    url: "https://console-openshift-console.apps.${domain}"
+  - name: OpenShift API
+    url: "https://api.${domain}:6443"
+    new_tab: true
+
+total_memory: 0Gi
+total_cores: 0
