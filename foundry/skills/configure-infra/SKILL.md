@@ -27,6 +27,68 @@ RHDP platform limits (approximate):
 - Containers: lightweight, typically under 2GB each
 - Storage: 100GB per VM maximum
 
+## Central Node (Multi-Service VM) Pattern
+
+Some labs consolidate many services onto a single VM instead of running separate
+containers or VMs per service. This pattern is used when services need to:
+- Share a local DNS server (e.g., FreeIPA running on the same host)
+- Communicate over localhost or podman internal networking
+- Share IPA client enrollment or Kerberos keytabs
+- Reduce total VM count for resource-constrained environments
+
+See `foundry/references/zt-zero-trust-aap.md` for a production example (22 services
+on one 32GB VM).
+
+### When to Recommend
+
+Suggest a central node when the user needs 4+ services that have interdependencies,
+or when total memory would exceed RHDP limits if each service had its own VM.
+
+### Structure
+
+A central node is a standard VM in instances.yaml with many services and routes.
+The setup script uses podman to run containers on the VM, and systemd to manage
+native services. The key template is `setup-central-configure.sh.j2`.
+
+```yaml
+# instances.yaml: central node definition
+virtualmachines:
+  - name: central
+    image: rhel-9.5  # or a custom pre-baked image
+    memory: 32G
+    cores: 8
+    image_size: 70Gi
+    services:
+      # List ALL services hosted on this VM
+      - name: idm-https
+        ports: [{port: 443, protocol: TCP, targetPort: 443}]
+      - name: opa-http
+        ports: [{port: 8181, protocol: TCP, targetPort: 8181}]
+      # ... more services
+    routes:
+      # One route per externally-accessible service
+      - name: idm-https
+        host: idm-https
+        service: idm-https
+        targetPort: 443
+        tls_termination: Edge
+      # ... more routes
+```
+
+### Setup Script Generation
+
+Use the template `templates/zero-touch/setup-automation/setup-central-configure.sh.j2`
+to generate the central node configuration script. The template accepts:
+
+- `central_services[]`: List of services, each with:
+  - `name`: Service identifier
+  - `type`: "podman" (container) or "systemd" (native service)
+  - `image`: Container image (for podman type)
+  - `ports`: Port mappings as "host:container" strings
+  - `environment`: Key-value environment variables
+  - `readiness_check`: Command or URL to verify service is ready
+  - `depends_on`: List of service names that must be ready first
+
 ## Workflow
 
 1. Read config/instances.yaml, firewall.yaml, ui-config.yml

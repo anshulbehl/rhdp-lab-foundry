@@ -90,6 +90,123 @@ Check for solve/validate scripts in runtime-automation.
 - [ ] Each module directory has validation-*.sh or validate.yml
 - [ ] Scripts are executable
 
+### Stage 6b: api-validation (new)
+Generate API-driven validation scripts for labs with AAP, Vault, TFE, or other API-accessible services.
+
+This pattern comes from the HashiCorp Summit lab (zt-ans-bu-hashi-aap, lb1390-validation branch)
+where solve/validate uses pure `ansible.builtin.uri` calls instead of SSH scripts. This approach
+works from the Showroom runner container which has no SSH access to lab VMs and no Ansible
+collections installed.
+
+See `foundry/references/zt-hashi-aap.md` for the full pattern.
+
+**When to generate API validation:**
+- Lab has AAP controller (most zero-touch labs)
+- Lab has Vault, TFE, OPA, NetBox, or other services with REST APIs
+- Lab uses workflow job templates or custom credential types
+
+**What gets generated:**
+
+For each module, generate `runtime-automation/module-NN/validation.yml`:
+```yaml
+---
+- name: Validate module NN
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    aap_host: "https://control.{{ lab_domain }}"
+    aap_user: "admin"
+    aap_pass: "ansible123!"
+
+  tasks:
+    # AAP resource checks: verify resources exist via API query
+    - name: "Check: credential type exists"
+      ansible.builtin.uri:
+        url: "{{ aap_host }}/api/controller/v2/credential_types/"
+        url_username: "{{ aap_user }}"
+        url_password: "{{ aap_pass }}"
+        method: GET
+        validate_certs: false
+        force_basic_auth: true
+        body_format: json
+        status_code: 200
+      register: result
+
+    - name: "Verify: credential type present"
+      ansible.builtin.assert:
+        that: result.json.count > 0
+        fail_msg: "Expected credential type not found"
+
+    # Vault checks (if applicable)
+    - name: "Check: Vault secret engine mounted"
+      ansible.builtin.uri:
+        url: "http://vault.{{ lab_domain }}:8200/v1/sys/mounts"
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        status_code: [200, 403]
+      register: vault_mounts
+```
+
+**Solve script pattern:**
+
+For each module, optionally generate `runtime-automation/module-NN/solve.yml` that
+creates all the resources the student should have created, using the same API approach:
+```yaml
+    # Create resource via API (no collections needed)
+    - name: "Create credential in AAP"
+      ansible.builtin.uri:
+        url: "{{ aap_host }}/api/controller/v2/credentials/"
+        url_username: "{{ aap_user }}"
+        url_password: "{{ aap_pass }}"
+        method: POST
+        validate_certs: false
+        force_basic_auth: true
+        body_format: json
+        body:
+          name: "My Credential"
+          credential_type: 1
+          organization: 1
+          inputs:
+            username: "admin"
+            password: "secret"
+        status_code: [200, 201]
+      register: result
+      failed_when: result.status not in [200, 201, 400]
+      # 400 = already exists, which is fine (idempotent)
+```
+
+**API endpoints to validate per service:**
+
+| Service | Validate Endpoint | What to Check |
+|:--------|:------------------|:--------------|
+| AAP controller | GET /api/controller/v2/ping/ | Status 200 = healthy |
+| AAP credentials | GET /api/controller/v2/credentials/?name=X | count > 0 |
+| AAP credential types | GET /api/controller/v2/credential_types/?name=X | count > 0 |
+| AAP job templates | GET /api/controller/v2/job_templates/?name=X | count > 0 |
+| AAP workflows | GET /api/controller/v2/workflow_job_templates/?name=X | count > 0 |
+| AAP inventory sources | GET /api/controller/v2/inventory_sources/?name=X | count > 0 |
+| AAP projects | GET /api/controller/v2/projects/?name=X | count > 0, status=successful |
+| Vault health | GET /v1/sys/health | initialized=true, sealed=false |
+| Vault secret | GET /v1/secret/data/X | data present |
+| Vault auth methods | GET /v1/sys/auth | method listed |
+| Vault policies | GET /v1/sys/policies/acl/X | policy exists |
+| TFE workspaces | GET /api/v2/organizations/ORG/workspaces | workspace found |
+| TFE workspace vars | GET /api/v2/workspaces/ID/vars | vars present |
+| OPA policy | POST /v1/data/PATH | result.allow = true/false |
+| NetBox objects | GET /api/ipam/vlans/?vid=X | count > 0 |
+
+**Generation logic:**
+
+When running `validate-lab` on a lab that has AAP and other API services:
+1. Read `.foundry.yml` to identify configured services
+2. Read `content/modules/ROOT/pages/` to identify what students create in each module
+3. For each module, generate a validation.yml that checks the expected end state
+4. For each module, generate a solve.yml that creates the expected end state via API
+5. Mark scripts as API-driven in `.foundry.yml` so runtime-automation/main.yml
+   knows to run them with `ansible-playbook` instead of `sh`
+
 ### Stage 7: health
 Generate provisioning health check scripts.
 
