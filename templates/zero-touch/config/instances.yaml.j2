@@ -53,9 +53,8 @@ containers:
 {% endif %}
 {% if container.environment is defined %}
     environment:
-{% for env in container.environment %}
-      - name: {{ env.name }}
-        value: "{{ env.value }}"
+{% for key, value in container.environment.items() %}
+      {{ key }}: "{{ value }}"
 {% endfor %}
 {% endif %}
 {% if container.volumes is defined %}
