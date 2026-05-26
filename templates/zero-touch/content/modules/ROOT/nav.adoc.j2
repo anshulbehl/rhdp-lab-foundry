@@ -1,0 +1,3 @@
+{% for module in modules %}
+* xref:module-{{ '%02d' | format(module.number) }}.adoc[{{ module.title }}]
+{% endfor %}

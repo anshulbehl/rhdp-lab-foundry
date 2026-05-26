@@ -1,0 +1,5 @@
+---
+- name: default
+{% for network in networks | default([]) %}
+- name: {{ network.name }}
+{% endfor %}

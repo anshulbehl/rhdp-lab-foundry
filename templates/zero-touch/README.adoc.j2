@@ -1,0 +1,26 @@
+= {{ lab_name }}
+
+{{ lab_description }}
+
+== Lab Structure
+
+* `config/` - Infrastructure configuration (instances, firewall, networks)
+* `setup-automation/` - One-time provisioning scripts
+* `runtime-automation/` - Module setup, solve, and validation scripts
+* `content/` - Antora workshop documentation
+
+== Local Development
+
+Build the docs locally:
+
+[source,bash]
+----
+utilities/lab-build
+utilities/lab-serve
+----
+
+Then open http://localhost:8080
+
+== Provisioning
+
+This lab is provisioned through RHDP (Red Hat Demo Platform).
