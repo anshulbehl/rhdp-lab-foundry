@@ -4,6 +4,8 @@
 #
 # RHDP runner format rules:
 # - VM memory uses G (e.g., 16G), container memory uses Gi (e.g., 2Gi)
+# - VM userdata MUST use |- (literal block), NEVER >- (folded scalar)
+# - VM userdata MUST include ssh_pwauth: true (not runcmd for SSH)
 # - Container environment must be a flat dict (runner uses dict2items)
 # - Container ports must be objects with name/containerPort/protocol
 # - Container services use ports as list of {port, protocol, targetPort}

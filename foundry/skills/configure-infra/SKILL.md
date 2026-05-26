@@ -89,6 +89,19 @@ to generate the central node configuration script. The template accepts:
   - `readiness_check`: Command or URL to verify service is ready
   - `depends_on`: List of service names that must be ready first
 
+## Critical Format Rules
+
+These rules prevent provisioning failures on RHDP. Violations cause silent
+breakage (VMs boot but SSH never works, runner times out after 20 minutes).
+
+- VM userdata MUST use `|-` (literal block scalar), NEVER `>-` (folded).
+  The `>-` collapses cloud-init into one line, breaking YAML parsing.
+- VM userdata MUST include `ssh_pwauth: true` for SSH password access.
+  Do NOT use `runcmd` to set PasswordAuthentication.
+- VM memory uses `G` (e.g., `16G`), container memory uses `Gi` (e.g., `2Gi`).
+- Container environment must be a flat dict, not a list of {name, value}.
+- Containers do NOT use `routes:`. Only VMs use routes.
+
 ## Workflow
 
 1. Read config/instances.yaml, firewall.yaml, ui-config.yml
