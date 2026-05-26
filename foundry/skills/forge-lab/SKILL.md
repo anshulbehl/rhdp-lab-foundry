@@ -76,7 +76,7 @@ These questions determine the deployment platform and base infrastructure.
 8. **RHEL version for managed nodes?**
    The RHEL version for target VMs that AAP will automate against. Does not affect the controller VM.
    Options:
-   - RHEL 9.3 (image: rhel93): Well-tested, most labs use this.
+   - RHEL 9.5 (image: rhel-9.5): Current standard, used by most production labs.
    - RHEL 9.4 (image: rhel-9.4): Newer, use when you need specific 9.4 packages.
    - RHEL 10.0 (image: rhel-10-0-07-09-25-3): For labs showcasing RHEL 10 features.
    - RHEL 10.1 (image: rhel-10-1-04-15-26): Latest RHEL 10.

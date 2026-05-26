@@ -54,7 +54,7 @@ virtualmachines:
         value: ai
 
   - name: rhel-1
-    image: rhel93
+    image: rhel-9.5
     memory: 4Gi
     cores: 2
     image_size: 30Gi

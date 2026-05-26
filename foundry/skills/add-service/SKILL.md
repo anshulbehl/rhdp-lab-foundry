@@ -34,7 +34,7 @@ For known services, use pre-built definitions:
 | Kafka | container | docker.io/apache/kafka:latest | 9092 | 1GB |
 | nginx | container | docker.io/library/nginx:latest | 80, 443 | 256MB |
 | PostgreSQL | container | docker.io/library/postgres:16 | 5432 | 512MB |
-| RHEL node | vm | rhel93 | 22 | 4GB, 2 cores |
+| RHEL node | vm | rhel-9.5 | 22 | 4GB, 2 cores |
 | HashiCorp Vault | vm | vault-rhel-image-1 | 8200, 8201 | 16GB, 2 cores |
 | Terraform Enterprise | vm | tfe-rhel-image-1 | 443, 8443 | 16GB, 4 cores |
 | VSCode (code-server) | vm | devtools-ansible | 8080 | 8GB, 2 cores |

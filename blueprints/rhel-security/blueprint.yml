@@ -8,7 +8,7 @@ lab_type: zero-touch
 
 virtualmachines:
   - name: control
-    image: rhel93
+    image: rhel-9.5
     memory: 4Gi
     cores: 2
     image_size: 30Gi
@@ -37,7 +37,7 @@ virtualmachines:
         value: control
 
   - name: rhel-1
-    image: rhel93
+    image: rhel-9.5
     memory: 4Gi
     cores: 2
     image_size: 30Gi
@@ -46,7 +46,7 @@ virtualmachines:
         value: managed_nodes
 
   - name: rhel-2
-    image: rhel93
+    image: rhel-9.5
     memory: 4Gi
     cores: 2
     image_size: 30Gi
