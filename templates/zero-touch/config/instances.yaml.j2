@@ -9,7 +9,7 @@
 # - Container environment must be a flat dict (runner uses dict2items)
 # - Container ports must be objects with name/containerPort/protocol
 # - Container services use ports as list of {port, protocol, targetPort}
-# - Containers do NOT use routes (RHDP runner handles routing from services)
+# - Containers DO use routes (RHDP runner creates routes from container routes section)
 # - Only VMs use routes with tls_termination
 # - Firewall: flat indentation, egress should mirror ingress
 
