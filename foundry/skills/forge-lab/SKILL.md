@@ -361,7 +361,11 @@ After interview and confirmation, create the repo structure as documented in the
 1. **config/instances.yaml**: Generated from blueprint + answers to Phase 2/3 questions
 2. **config/firewall.yaml**: Ports derived from selected services
 3. **config/networks.yaml**: Flat list of networks (always includes default)
-4. **config/secrets.yaml**: Constant vault-encrypted secrets file (copied from template)
+4. **config/secrets.yaml**: MUST be copied verbatim from
+   `templates/zero-touch/config/secrets.yaml` in the foundry plugin.
+   This is a vault-encrypted file shared by all Ansible BU labs.
+   Do NOT generate an empty placeholder. Do NOT create your own.
+   Read the template file and write its exact contents to the lab repo.
 5. **ui-config.yml**: Tabs for each service with a web UI, external: false
 6. **site.yml / default-site.yml**: Antora site config with nookbag theme
 7. **setup-automation/ansible.cfg**: host_key_checking = False (required for SSH)
