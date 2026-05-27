@@ -479,7 +479,7 @@ MUST follow this pattern:
   (needed because awx.awx has broken token generation on AAP 2.6 Gateway)
 - Runs Ansible playbooks using `ansible.controller` modules with token
   passed as extra var (`-e controller_oauth_token=$TOKEN`)
-- Uses `set -euo pipefail` (safe because AAP is confirmed ready)
+- Do NOT use `set -euo pipefail` (the curl wait loop must survive failures)
 
 The setup playbooks use `ansible.controller` modules (credential, inventory,
 project, job_template, workflow_job_template, etc.) because they run on the
