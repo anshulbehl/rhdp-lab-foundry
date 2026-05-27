@@ -1,0 +1,59 @@
+---
+- name: Create inventory
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ../config/secrets.yaml
+
+  tasks:
+    - name: Add control host
+      ansible.builtin.add_host:
+        name: control
+        ansible_ssh_host: "{{ lookup('ansible.builtin.env', 'BASTION_HOST') }}"
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ah_token: "{{ ahtoken }}"
+
+- name: Setup control node
+  hosts: control
+  gather_facts: false
+
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Create setup scripts directory
+      ansible.builtin.file:
+        path: /tmp/setup-scripts
+        state: directory
+        mode: "0755"
+
+    - name: Copy bootstrap script
+      ansible.builtin.copy:
+        src: ./setup-control.sh
+        dest: /tmp/setup-scripts/setup-control.sh
+        mode: "0755"
+
+    - name: Copy configure script
+      ansible.builtin.copy:
+        src: ./setup-control-configure.sh
+        dest: /tmp/setup-scripts/setup-control-configure.sh
+        mode: "0755"
+
+    - name: "Phase 1: Bootstrap (ansible.cfg, collections)"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control.sh
+        > /tmp/setup-scripts/setup-control.log 2>&1
+      become: true
+      environment:
+        AH_TOKEN: "{{ ah_token }}"
+
+    - name: "Phase 2: Configure AAP (credentials, inventory, templates)"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control-configure.sh
+        > /tmp/setup-scripts/setup-control-configure.log 2>&1
+      become: true
