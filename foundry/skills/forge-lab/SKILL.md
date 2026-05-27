@@ -456,12 +456,14 @@ With collections installed, the setup playbook can use `ansible.controller`
 and `ansible.platform` modules directly instead of curl/API calls.
 
 **setup-automation/setup-control.sh** (or setup-aap-configure.sh):
-- Do NOT use `set -euo pipefail` at the top. The AAP wait loop uses curl
-  which fails while AAP boots, and `set -e` kills the script instantly.
-  Either omit it entirely or add it AFTER the wait loop succeeds.
+- AAP_HOST must be `https://localhost` (port 443). NOT port 8443.
+- Do NOT use `set -euo pipefail`. The curl wait loop must survive failures.
+- Do NOT use `ansible.controller` collection modules. The setup container
+  does not have them and cannot install them (needs Automation Hub auth).
+  Use curl with basic auth (`-u admin:ansible123!`) for all API calls.
+- Do NOT use OAuth tokens. Basic auth works for setup scripts.
 - The showroom pod retries the setup container on failure, so the script
-  will eventually run when AAP is ready. But each failed attempt adds
-  ~90 seconds of backoff delay. A proper wait loop avoids this.
+  will eventually run when AAP is ready.
 
 ## Containers (Gitea, Splunk, etc.)
 
