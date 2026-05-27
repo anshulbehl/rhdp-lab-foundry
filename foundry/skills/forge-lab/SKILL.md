@@ -367,8 +367,8 @@ After interview and confirmation, create the repo structure as documented in the
 7. **setup-automation/ansible.cfg**: host_key_checking = False (required for SSH)
 8. **setup-automation/requirements.yml**: Collections to install (ansible.controller, ansible.platform)
 9. **setup-automation/main.yml**: Bastion host pattern, add_host, all:!localhost
-10. **setup-automation/setup-control.sh**: AH token config, collection install, AAP configuration
-11. **setup-automation/setup-aap-configure.sh**: Generated from template if Q30 = yes (AAP post-install)
+10. **setup-automation/setup-control.sh**: Phase 1 bootstrap: ansible.cfg with AH token, install collections from requirements.yml, clone automation repo. ALWAYS generated for Ansible labs.
+11. **setup-automation/setup-control-configure.sh**: Phase 2: wait for AAP, generate OAuth token, run playbooks with ansible.controller modules to create credentials/inventory/project/templates. ALWAYS generated when AAP post-install is selected.
 12. **setup-automation/setup-central-configure.sh**: Generated if central node pattern selected
 13. **setup-automation/setup-eda-configure.sh**: Generated if Q13 = yes (EDA)
 14. **eda/rulebook.yml**: Generated from template if Q13 = yes
@@ -455,15 +455,37 @@ ansible-galaxy collection install -r requirements.yml
 With collections installed, the setup playbook can use `ansible.controller`
 and `ansible.platform` modules directly instead of curl/API calls.
 
-**setup-automation/setup-control.sh** (or setup-aap-configure.sh):
-- AAP_HOST must be `https://localhost` (port 443). NOT port 8443.
-- Do NOT use `set -euo pipefail`. The curl wait loop must survive failures.
-- Do NOT use `ansible.controller` collection modules. The setup container
-  does not have them and cannot install them (needs Automation Hub auth).
-  Use curl with basic auth (`-u admin:ansible123!`) for all API calls.
-- Do NOT use OAuth tokens. Basic auth works for setup scripts.
-- The showroom pod retries the setup container on failure, so the script
-  will eventually run when AAP is ready.
+**ALL Ansible labs use a two-phase setup pattern** (from Nuno's production labs).
+This is NOT specific to zero-trust. Every lab that has an AAP controller
+MUST follow this pattern:
+
+**Phase 1: `setup-control.sh` (bootstrap on controller VM)**
+- Runs on the controller VM via SSH from the showroom setup container
+- Configures `~/.ansible.cfg` with Automation Hub token from secrets.yaml
+- Installs collections from `requirements.yml` via `ansible-galaxy`
+- Fallback: symlinks `awx.awx` as `ansible.controller` if Hub unavailable
+- Uses `set -euo pipefail` (safe here, no curl wait loop)
+- Clones the lab automation repo to `/tmp/`
+
+**Phase 2: `setup-control-configure.sh` (configure AAP)**
+- Also runs on the controller VM
+- Waits for AAP readiness via curl to `https://localhost/api/controller/v2/ping/`
+  (port 443, NOT 8443)
+- Generates OAuth token via POST to `/api/controller/v2/tokens/`
+  (needed because awx.awx has broken token generation on AAP 2.6 Gateway)
+- Runs Ansible playbooks using `ansible.controller` modules with token
+  passed as extra var (`-e controller_oauth_token=$TOKEN`)
+- Uses `set -euo pipefail` (safe because AAP is confirmed ready)
+
+The setup playbooks use `ansible.controller` modules (credential, inventory,
+project, job_template, workflow_job_template, etc.) because they run on the
+controller VM where the collections were installed in Phase 1.
+
+**main.yml orchestration:**
+- Phase 1 and 2 run sequentially on the controller VM
+- main.yml calls both scripts via `ansible.builtin.shell`
+- Phase 2 is a separate script so the showroom pod can retry just the
+  configure phase if AAP isn't ready yet on the first attempt
 
 ## Containers (Gitea, Splunk, etc.)
 
