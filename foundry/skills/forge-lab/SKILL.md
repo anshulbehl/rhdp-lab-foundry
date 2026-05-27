@@ -380,6 +380,10 @@ After interview and confirmation, create the repo structure as documented in the
 When generating config files, use EXACTLY these formats. The RHDP runner
 is strict about YAML structure and will fail with cryptic errors otherwise.
 
+## Canonical networks.yaml and firewall.yaml
+
+Copy these exactly. Do NOT modify the structure.
+
 **config/networks.yaml** MUST be a flat YAML list at root level.
 This is the most common scaffolding error. The RHDP runner passes
 this file directly to a Jinja2 loop and it WILL fail if wrapped
@@ -495,6 +499,80 @@ When infrastructure changes (e.g., removing a VM), update ALL layers:
 If AAP post-install is "No" (students configure manually), content must
 instruct students to create credentials, inventories, and templates.
 Do NOT reference "pre-configured" resources when setup scripts don't create them.
+
+## Canonical instances.yaml Example
+
+ALWAYS use this exact format when generating instances.yaml. Copy this
+structure and modify names/counts. Do NOT invent your own YAML structure.
+
+```yaml
+---
+virtualmachines:
+  - name: control
+    image: aap-2.6-6-ceh-20260325
+    memory: 32G
+    cores: 4
+    image_size: 50Gi
+    tags:
+      - key: AnsibleGroup
+        value: isolated
+    networks:
+      - default
+    services:
+      - name: control-https
+        ports:
+          - port: 443
+            protocol: TCP
+            targetPort: 443
+            name: control-https
+    routes:
+      - name: control-https
+        host: control
+        service: control-https
+        targetPort: 443
+        tls: true
+        tls_termination: reencrypt
+        tls_destinationCACertificate: |
+          -----BEGIN CERTIFICATE-----
+          <AAP CA cert from blueprint>
+          -----END CERTIFICATE-----
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
+
+  - name: rhel-1
+    image: rhel-9.5
+    memory: 4G
+    cores: 2
+    image_size: 30Gi
+    tags:
+      - key: AnsibleGroup
+        value: isolated
+    networks:
+      - default
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
+```
+
+Key patterns that MUST be followed exactly:
+- `services.ports` is a LIST of objects with port/protocol/targetPort/name
+- NOT `services.port` (singular, flat)
+- `memory` uses `G` for VMs (not `Gi`)
+- `tags` uses `key`/`value` pairs (not flat dict)
+- `networks` is a list with `- default`
+- `userdata` uses `|-` with `runcmd` (not `ssh_pwauth`)
+- AAP route has `tls_destinationCACertificate`
 
 ## Post-Scaffolding Validation
 
