@@ -522,6 +522,23 @@ If AAP post-install is "No" (students configure manually), content must
 instruct students to create credentials, inventories, and templates.
 Do NOT reference "pre-configured" resources when setup scripts don't create them.
 
+## Canonical secrets.yaml
+
+config/secrets.yaml is a vault-encrypted file that MUST be copied from
+the foundry plugin's template directory. DO NOT generate it. DO NOT
+create an empty placeholder. DO NOT write `secrets: []`.
+
+To create it: Read the file `templates/zero-touch/config/secrets.yaml`
+from the foundry plugin repo (relative to the plugin root) and write
+its EXACT contents to `config/secrets.yaml` in the new lab. The file
+is located two levels up from this skill's directory, at
+`../../templates/zero-touch/config/secrets.yaml`.
+
+This file contains vault-encrypted variables including `ahtoken`
+(Automation Hub token), `ssh_key`, `reg_username`, `reg_password`,
+`vaultlic`, and `tmm_activation`. The vault password is provided by
+the RHDP runner via the VAULT_PASSWORD environment variable.
+
 ## Canonical instances.yaml Example
 
 ALWAYS use this exact format when generating instances.yaml. Copy this
