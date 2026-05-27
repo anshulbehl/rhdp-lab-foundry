@@ -358,16 +358,22 @@ Load relevant reference files and use them to:
 
 After interview and confirmation, create the repo structure as documented in the original skill definition. The key additions from the interview:
 
-1. **instances.yaml**: Generated from blueprint + answers to Phase 2/3 questions
-2. **firewall.yaml**: Ports derived from selected services
-3. **ui-config.yml**: Tabs for each service with a web UI
-4. **setup-automation/setup-control.sh**: AAP version-specific setup using `ansible.controller` modules
-5. **setup-automation/setup-aap-configure.sh**: Generated from template if Q30 = yes (AAP post-install)
-6. **setup-automation/setup-central-configure.sh**: Generated if central node pattern selected
-7. **setup-automation/setup-eda-configure.sh**: Generated if Q13 = yes (EDA)
-8. **eda/rulebook.yml**: Generated from template if Q13 = yes
-9. **.foundry.yml**: Records all interview answers for future reference
-10. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q35)
+1. **config/instances.yaml**: Generated from blueprint + answers to Phase 2/3 questions
+2. **config/firewall.yaml**: Ports derived from selected services
+3. **config/networks.yaml**: Flat list of networks (always includes default)
+4. **config/secrets.yaml**: Constant vault-encrypted secrets file (copied from template)
+5. **ui-config.yml**: Tabs for each service with a web UI, external: false
+6. **site.yml / default-site.yml**: Antora site config with nookbag theme
+7. **setup-automation/ansible.cfg**: host_key_checking = False (required for SSH)
+8. **setup-automation/requirements.yml**: Collections to install (ansible.controller, ansible.platform)
+9. **setup-automation/main.yml**: Bastion host pattern, add_host, all:!localhost
+10. **setup-automation/setup-control.sh**: AH token config, collection install, AAP configuration
+11. **setup-automation/setup-aap-configure.sh**: Generated from template if Q30 = yes (AAP post-install)
+12. **setup-automation/setup-central-configure.sh**: Generated if central node pattern selected
+13. **setup-automation/setup-eda-configure.sh**: Generated if Q13 = yes (EDA)
+14. **eda/rulebook.yml**: Generated from template if Q13 = yes
+15. **.foundry.yml**: Records all interview answers for future reference
+16. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q35)
 
 ## Config File Format Rules
 
@@ -406,6 +412,44 @@ ingress:
 Do NOT indent `- ports:` under `ingress:`.
 
 **config/instances.yaml** rules are documented in the instances.yaml.j2 template header.
+
+**config/secrets.yaml** is a constant vault-encrypted file shared across
+all Ansible BU labs. Copy it from `templates/zero-touch/config/secrets.yaml`.
+It contains: username, password, reg_username, reg_password, ssh_key,
+ahtoken, vaultlic, tmm_activation, tmm_orgid. Lab developers can use
+whichever vars they need. The vault password is provided by the RHDP
+runner via VAULT_PASSWORD env var.
+
+**setup-automation/requirements.yml** lists Ansible collections to install
+on the controller VM before running setup playbooks. The setup script
+should configure `~/.ansible.cfg` with Automation Hub auth (using ahtoken
+from secrets.yaml) and then install collections from this file.
+
+The pattern from Nuno's working labs:
+```bash
+# Configure Automation Hub auth
+tee ~/.ansible.cfg > /dev/null <<EOF
+[defaults]
+[galaxy]
+server_list = automation_hub, validated, galaxy
+[galaxy_server.automation_hub]
+url = https://console.redhat.com/api/automation-hub/content/published/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.validated]
+url = https://console.redhat.com/api/automation-hub/content/validated/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.galaxy]
+url=https://galaxy.ansible.com/
+EOF
+
+# Install collections
+ansible-galaxy collection install -r requirements.yml
+```
+
+With collections installed, the setup playbook can use `ansible.controller`
+and `ansible.platform` modules directly instead of curl/API calls.
 
 **setup-automation/setup-control.sh** should handle AAP boot time gracefully.
 The AAP controller takes 30-60 seconds to boot with 32G memory. The setup
