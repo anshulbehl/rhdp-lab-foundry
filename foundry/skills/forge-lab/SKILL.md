@@ -455,11 +455,13 @@ ansible-galaxy collection install -r requirements.yml
 With collections installed, the setup playbook can use `ansible.controller`
 and `ansible.platform` modules directly instead of curl/API calls.
 
-**setup-automation/setup-control.sh** should handle AAP boot time gracefully.
-The AAP controller takes 30-60 seconds to boot with 32G memory. The setup
-script will be retried by the showroom pod if it fails, so use a wait loop
-with `sleep 10` between attempts. Avoid `set -euo pipefail` before the
-wait loop or ensure curl failures don't kill the script.
+**setup-automation/setup-control.sh** (or setup-aap-configure.sh):
+- Do NOT use `set -euo pipefail` at the top. The AAP wait loop uses curl
+  which fails while AAP boots, and `set -e` kills the script instantly.
+  Either omit it entirely or add it AFTER the wait loop succeeds.
+- The showroom pod retries the setup container on failure, so the script
+  will eventually run when AAP is ready. But each failed attempt adds
+  ~90 seconds of backoff delay. A proper wait loop avoids this.
 
 ## Containers (Gitea, Splunk, etc.)
 
