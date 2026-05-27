@@ -369,6 +369,25 @@ After interview and confirmation, create the repo structure as documented in the
 9. **.foundry.yml**: Records all interview answers for future reference
 10. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q35)
 
+## Container Route Limitation
+
+The Developer Experience CI (used for testing labs before AgnosticV onboarding)
+does NOT create external routes for containers. It only creates routes for VMs.
+Container routes are created automatically when the lab is onboarded to AgnosticV.
+
+When generating a lab:
+- Container services (Gitea, Splunk, Mattermost) will NOT have external routes
+  when testing via the Developer Experience CI
+- For testing: either remove container tabs from ui-config.yml, or tell the user
+  to manually create the route via `oc create route` on the cluster
+- For production: container routes work automatically through AgnosticV
+- VM services (AAP controller, Vault, etc.) always get routes on both CI types
+
+When generating ui-config.yml:
+- Include container tabs with a comment noting they require AgnosticV deployment
+- For Developer Experience CI testing, suggest using Terminal tab to access
+  container services via curl (e.g., `curl http://gitea:3000`)
+
 ## Cross-Layer Consistency
 
 When generating a lab, ensure all three layers are aligned:

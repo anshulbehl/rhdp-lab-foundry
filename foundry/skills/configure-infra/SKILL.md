@@ -109,7 +109,10 @@ breakage (VMs boot but SSH never works, runner times out after 20 minutes).
 - RHEL image: `rhel-9.5`.
 
 **Routes and networking:**
-- Both VMs and containers use `routes:` sections for external access.
+- VMs always get external routes from their `routes:` section.
+- Containers have `routes:` sections but they only work when the lab
+  is deployed through AgnosticV (production). The Developer Experience
+  CI does NOT create container routes.
 - AAP controller route MUST use `reencrypt` with `tls_destinationCACertificate`
   containing the AAP CA cert. Without it, the router returns 503.
 - Container routes use `Edge` TLS termination.
