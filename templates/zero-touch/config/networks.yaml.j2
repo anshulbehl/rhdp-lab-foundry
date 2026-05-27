@@ -1,4 +1,9 @@
 ---
+# CRITICAL: This file MUST be a flat YAML list at root level.
+# Do NOT wrap in a networks: key or any other key.
+# WRONG: networks:\n  - name: default
+# RIGHT: - name: default
+# The RHDP runner passes this directly to a Jinja2 loop.
 - name: default
 {% for network in networks | default([]) %}
 - name: {{ network.name }}

@@ -374,12 +374,26 @@ After interview and confirmation, create the repo structure as documented in the
 When generating config files, use EXACTLY these formats. The RHDP runner
 is strict about YAML structure and will fail with cryptic errors otherwise.
 
-**config/networks.yaml** must be a flat list at root level:
+**config/networks.yaml** MUST be a flat YAML list at root level.
+This is the most common scaffolding error. The RHDP runner passes
+this file directly to a Jinja2 loop and it WILL fail if wrapped
+in any key.
+
+CORRECT (the ONLY valid format):
 ```yaml
 ---
 - name: default
 ```
-Do NOT wrap in a `networks:` key. The runner passes this directly to a loop.
+
+WRONG (causes "Invalid data passed to loop" error):
+```yaml
+---
+networks:
+  - name: default
+```
+
+After generating networks.yaml, ALWAYS verify the first non-comment
+line after `---` starts with `- name:`, not `networks:`.
 
 **config/firewall.yaml** must use flat indentation:
 ```yaml
@@ -393,11 +407,11 @@ Do NOT indent `- ports:` under `ingress:`.
 
 **config/instances.yaml** rules are documented in the instances.yaml.j2 template header.
 
-**setup-automation/setup-control.sh** must use `python3` for HTTP calls,
-NOT `curl`. The AAP controller image (`aap-2.6-*`) does not have `curl`
-installed. Use `python3 urllib.request` for all AAP API calls. Also
-remove `set -euo pipefail` or ensure all API calls handle failures
-gracefully.
+**setup-automation/setup-control.sh** should handle AAP boot time gracefully.
+The AAP controller takes 30-60 seconds to boot with 32G memory. The setup
+script will be retried by the showroom pod if it fails, so use a wait loop
+with `sleep 10` between attempts. Avoid `set -euo pipefail` before the
+wait loop or ensure curl failures don't kill the script.
 
 ## Container Route Limitation
 
@@ -437,6 +451,29 @@ When infrastructure changes (e.g., removing a VM), update ALL layers:
 If AAP post-install is "No" (students configure manually), content must
 instruct students to create credentials, inventories, and templates.
 Do NOT reference "pre-configured" resources when setup scripts don't create them.
+
+## Post-Scaffolding Validation
+
+After generating all files, ALWAYS run these checks before reporting
+success. These catch the most common errors that cause provisioning
+failures:
+
+1. **networks.yaml**: Read the file back. First non-comment line after
+   `---` MUST start with `- name:`. If it starts with `networks:`,
+   fix it immediately.
+
+2. **firewall.yaml**: First entry under `ingress:` must be `- ports:`
+   at the same indentation level, not indented further.
+
+3. **instances.yaml**: Every VM must have `networks:`, `tags:`, and
+   `userdata:` with `|-` scalar. AAP controller must have 32G memory
+   and `tls_destinationCACertificate` on the route.
+
+4. **ansible.cfg**: Must exist in setup-automation/ with
+   `host_key_checking = False`.
+
+5. **Content consistency**: Every hostname in content pages must exist
+   in instances.yaml.
 
 ## Important Notes
 
