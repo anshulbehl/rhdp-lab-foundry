@@ -110,9 +110,10 @@ breakage (VMs boot but SSH never works, runner times out after 20 minutes).
 
 **Routes and networking:**
 - VMs always get external routes from their `routes:` section.
-- Containers have `routes:` sections but they only work when the lab
-  is deployed through AgnosticV (production). The Developer Experience
-  CI does NOT create container routes.
+- Containers also use `routes:` sections and they work in production
+  (AgnosticV). During testing via Developer Experience CI, container
+  routes are not created but the containers still run. Do NOT remove
+  containers or their routes because of this testing limitation.
 - AAP controller route MUST use `reencrypt` with `tls_destinationCACertificate`
   containing the AAP CA cert. Without it, the router returns 503.
 - Container routes use `Edge` TLS termination.

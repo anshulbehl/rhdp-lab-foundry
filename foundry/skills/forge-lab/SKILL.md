@@ -457,24 +457,24 @@ script will be retried by the showroom pod if it fails, so use a wait loop
 with `sleep 10` between attempts. Avoid `set -euo pipefail` before the
 wait loop or ensure curl failures don't kill the script.
 
-## Container Route Limitation
+## Container Route Behavior
 
-The Developer Experience CI (used for testing labs before AgnosticV onboarding)
-does NOT create external routes for containers. It only creates routes for VMs.
-Container routes are created automatically when the lab is onboarded to AgnosticV.
+Containers (Gitea, Splunk, Mattermost) work in production when the lab is
+deployed through AgnosticV. Nuno confirms: "the gitea container works, I
+haven't had issues with it."
+
+The Developer Experience CI (used for testing before AgnosticV onboarding)
+does NOT create external routes for containers, only for VMs. This is a
+testing-only limitation.
 
 When generating a lab:
-- Container services (Gitea, Splunk, Mattermost) will NOT have external routes
-  when testing via the Developer Experience CI
-- For testing: either remove container tabs from ui-config.yml, or tell the user
-  to manually create the route via `oc create route` on the cluster
-- For production: container routes work automatically through AgnosticV
-- VM services (AAP controller, Vault, etc.) always get routes on both CI types
-
-When generating ui-config.yml:
-- Include container tabs with a comment noting they require AgnosticV deployment
-- For Developer Experience CI testing, suggest using Terminal tab to access
-  container services via curl (e.g., `curl http://gitea:3000`)
+- ALWAYS include containers like Gitea if the lab needs them. Do NOT
+  remove containers just because of Developer Experience CI limitations.
+- ALWAYS include container tabs in ui-config.yml. They work in production.
+- When testing via Developer Experience CI: the container tabs won't load
+  in the Showroom iframe, but the containers are running and accessible
+  internally via Terminal (`curl http://gitea:3000`). The developer can
+  also create the route manually via `oc create route`.
 
 ## Cross-Layer Consistency
 
