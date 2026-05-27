@@ -127,6 +127,10 @@ For each file, READ the template first, then modify only what's needed.
   (matching the bastion hostname `control`), NOT `solve-host1.sh`.
 - Make all scripts executable.
 
+**content/antora.yml** MUST use `name: modules` (not the lab name).
+Showroom expects content at `/modules/` path. If you use any other
+name, Showroom returns 404.
+
 ### 4c. Generate from scratch:
 
 - `ui-config.yml` - tabs with `external: false`, trailing slash on URLs

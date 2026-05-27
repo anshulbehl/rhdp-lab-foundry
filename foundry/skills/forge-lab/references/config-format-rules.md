@@ -44,6 +44,15 @@ These rules are non-negotiable. Violating ANY of them causes provisioning failur
 | Module defaults | `group/ansible.controller.controller` with `validate_certs: false` |
 | Credential match | Username/password MUST match VM userdata user/password |
 
+## content/antora.yml Rules
+
+| Rule | Detail |
+|:-----|:-------|
+| name | MUST be `modules` (not the lab name). Showroom expects content at `/modules/` path. |
+| title | Lab display title |
+| version | `master` |
+| nav | `- modules/ROOT/nav.adoc` |
+
 ## ui-config.yml Rules
 
 | Rule | Detail |
