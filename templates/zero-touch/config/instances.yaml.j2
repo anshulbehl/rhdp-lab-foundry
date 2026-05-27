@@ -9,8 +9,11 @@
 # - Container environment must be a flat dict (runner uses dict2items)
 # - Container ports must be objects with name/containerPort/protocol
 # - Container services use ports as list of {port, protocol, targetPort}
-# - Containers DO use routes (RHDP runner creates routes from container routes section)
-# - Only VMs use routes with tls_termination
+# - Containers DO use routes (RHDP runner creates them from routes section)
+# - Both VMs and containers use routes with tls_termination
+# - AAP controller needs 32G memory and CA cert for reencrypt route
+# - Every VM needs networks: [default] and AnsibleGroup: isolated tag
+# - setup-automation/ needs ansible.cfg with host_key_checking = False
 # - Firewall: flat indentation, egress should mirror ingress
 
 {% if virtualmachines is defined %}
@@ -114,7 +117,19 @@ containers:
           - port: {{ port.port }}
             protocol: {{ port.protocol | default('TCP') }}
             targetPort: {{ port.targetPort | default(port.port) }}
+            name: {{ port.name | default(svc.name) }}
 {% endfor %}
+{% endfor %}
+{% endif %}
+{% if container.routes is defined %}
+    routes:
+{% for route in container.routes %}
+      - name: {{ route.name }}
+        host: {{ route.host | default(route.name) }}
+        service: {{ route.service }}
+        targetPort: {{ route.target_port | default(route.targetPort) }}
+        tls: true
+        tls_termination: {{ route.tls_termination | default('Edge') }}
 {% endfor %}
 {% endif %}
 {% endfor %}

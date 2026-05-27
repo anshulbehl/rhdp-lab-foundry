@@ -12,6 +12,11 @@ virtualmachines:
     memory: 4G
     cores: 2
     image_size: 30Gi
+    tags:
+      - key: AnsibleGroup
+        value: isolated
+    networks:
+      - default
     services:
       - name: ssh
         ports:
@@ -32,9 +37,16 @@ virtualmachines:
         targetPort: 9090
         tls: true
         tls_termination: Edge
-    tags:
-      - key: AnsibleGroup
-        value: control
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - >-
+          echo "PasswordAuthentication yes"
+          > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 
   - name: rhel-1
     image: rhel-9.5
@@ -43,7 +55,19 @@ virtualmachines:
     image_size: 30Gi
     tags:
       - key: AnsibleGroup
-        value: managed_nodes
+        value: isolated
+    networks:
+      - default
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - >-
+          echo "PasswordAuthentication yes"
+          > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 
   - name: rhel-2
     image: rhel-9.5
@@ -52,7 +76,19 @@ virtualmachines:
     image_size: 30Gi
     tags:
       - key: AnsibleGroup
-        value: managed_nodes
+        value: isolated
+    networks:
+      - default
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - >-
+          echo "PasswordAuthentication yes"
+          > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 
 containers:
   - name: gitea
@@ -86,8 +122,7 @@ containers:
       - name: gitea-varlib
         emptyDir: {}
     commands:
-      - >-
-        gitea admin user create --admin
+      - gitea admin user create --admin
         --username gitea --password ansible123!
         --email gitea@giteadummy.com
         --must-change-password=false
@@ -98,6 +133,14 @@ containers:
           - port: 3000
             protocol: TCP
             targetPort: 3000
+            name: gitea
+    routes:
+      - name: gitea
+        host: gitea
+        service: gitea
+        targetPort: 3000
+        tls: true
+        tls_termination: Edge
 
 ingress_ports:
   - 3000
@@ -109,5 +152,5 @@ tabs:
   - name: Gitea
     url: "https://gitea-${guid}.${domain}"
 
-total_memory: 12Gi
+total_memory: 14G
 total_cores: 6

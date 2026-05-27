@@ -94,15 +94,37 @@ to generate the central node configuration script. The template accepts:
 These rules prevent provisioning failures on RHDP. Violations cause silent
 breakage (VMs boot but SSH never works, runner times out after 20 minutes).
 
+**Userdata:**
 - VM userdata MUST use `|-` (literal block scalar), NEVER `>-` (folded).
   The `>-` collapses cloud-init into one line, breaking YAML parsing.
 - VM userdata MUST use `runcmd` to enable SSH password auth. Write
   `PasswordAuthentication yes` to `/etc/ssh/sshd_config.d/50-cloud-init.conf`
   and reload sshd. Do NOT use `ssh_pwauth: true` as it does not work on
   RHEL 9.5 images (the image's sshd_config overrides cloud-init's setting).
-- VM memory uses `G` (e.g., `16G`), container memory uses `Gi` (e.g., `2Gi`).
+
+**Memory and images:**
+- VM memory uses `G` (e.g., `32G`), container memory uses `Gi` (e.g., `2Gi`).
+- AAP controller MUST have 32G memory (16G causes slow boot and SSH timeouts).
+- AAP image: `aap-2.6-6-ceh-20260325` (proven working at Summit 2026).
+- RHEL image: `rhel-9.5`.
+
+**Routes and networking:**
+- Both VMs and containers use `routes:` sections for external access.
+- AAP controller route MUST use `reencrypt` with `tls_destinationCACertificate`
+  containing the AAP CA cert. Without it, the router returns 503.
+- Container routes use `Edge` TLS termination.
+- Every VM MUST have `networks: [default]` explicitly listed.
+- Every VM MUST have `tags: [{key: AnsibleGroup, value: isolated}]`.
+
+**Containers:**
 - Container environment must be a flat dict, not a list of {name, value}.
-- Containers do NOT use `routes:`. Only VMs use routes.
+- Container ports: `{name, containerPort, protocol}` objects.
+- Container service ports need a `name` field.
+
+**Setup automation:**
+- `setup-automation/ansible.cfg` with `host_key_checking = False` is required.
+  Without it, `sshpass` cannot handle SSH host key checking.
+- Repo URL must end with `.git` when ordering from RHDP catalog.
 
 ## Workflow
 

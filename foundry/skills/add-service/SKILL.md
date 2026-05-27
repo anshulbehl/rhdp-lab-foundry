@@ -334,6 +334,12 @@ See `foundry/references/INDEX.md` for the full tag mapping.
 
 - Match the YAML style and indentation of the existing instances.yaml
 - Use the same route naming convention as existing routes
-- For containers, always include a restart policy
-- For VMs, include cloud-init userdata with `runcmd` to enable SSH password auth. Do NOT use `ssh_pwauth: true` as it does not work on RHEL 9.5 images (sshd_config overrides it). The proven pattern is to write PasswordAuthentication to sshd_config.d and reload sshd.
-- ALWAYS use `|-` (literal block scalar) for userdata, NEVER `>-` (folded scalar). The `>-` collapses cloud-init YAML into a single line, breaking parsing.
+- Both VMs and containers need `routes:` sections for external access
+- For VMs: include `networks: [default]` and `tags: [{key: AnsibleGroup, value: isolated}]`
+- For VMs: include cloud-init userdata with `runcmd` to enable SSH password auth.
+  Do NOT use `ssh_pwauth: true` (RHEL 9.5 sshd_config overrides it).
+- ALWAYS use `|-` (literal block scalar) for userdata, NEVER `>-` (folded).
+- AAP controller needs 32G memory and CA cert on reencrypt route (503 without it)
+- Container service ports need a `name` field
+- Container environment must be a flat dict
+- `setup-automation/ansible.cfg` with `host_key_checking = False` is required
