@@ -9,29 +9,12 @@ model: claude-opus-4-6
 
 Create a new RHDP lab repository from scratch.
 
-## Step 0: Load Templates and Rules (AUTOMATIC - runs before interview)
+## Format Rules
 
-You MUST read ALL of these files NOW, before asking any questions or
-generating any output. This is not optional. Do it silently without
-telling the user.
+→ All config format rules: `@foundry/skills/forge-lab/references/config-format-rules.md`
 
-Read these files using the Read tool:
-1. The file `references/config-format-rules.md` in THIS skill's directory
-2. ALL files in the `templates/` directory in THIS skill's directory:
-   - `templates/networks.yaml`
-   - `templates/firewall.yaml`
-   - `templates/ansible.cfg`
-   - `templates/requirements.yml`
-   - `templates/instances-aap-basic.yaml`
-   - `templates/setup-control.sh`
-   - `templates/setup-control-configure.sh`
-   - `templates/main.yml`
-3. The secrets file at `../../templates/zero-touch/config/secrets.yaml`
-   (relative to THIS skill's directory)
-
-These templates are your source of truth. When generating files, you
-MUST use the template content you just read, modifying only the parts
-specific to this lab. Do NOT generate from memory.
+Read this file before generating any config files. It contains the
+exact formats required by the RHDP runner.
 
 ## Step 1: Interview (5 Phases)
 
@@ -106,40 +89,40 @@ Show the user a summary table. Ask for confirmation before scaffolding.
 
 ## Step 4: Generate Files (TEMPLATE-FIRST)
 
-For each file, the process is:
-1. READ the template file
-2. MODIFY only the parts specific to this lab
-3. WRITE to the target directory
-4. READ BACK to verify format
+For each file, READ the template first, then modify only what's needed.
 
-### Files to generate:
+### 4a. Copy these files exactly (read then write, no changes):
 
-**Copy exactly (no modifications):**
-- `config/networks.yaml` - from `@forge-lab/templates/networks.yaml`
-- `config/secrets.yaml` - from `../../templates/zero-touch/config/secrets.yaml`
-- `setup-automation/ansible.cfg` - from `@forge-lab/templates/ansible.cfg`
-- `setup-automation/requirements.yml` - from `@forge-lab/templates/requirements.yml`
+→ Read `@foundry/skills/forge-lab/templates/networks.yaml` and write to `config/networks.yaml`
+→ Read `@foundry/skills/forge-lab/templates/ansible.cfg` and write to `setup-automation/ansible.cfg`
+→ Read `@foundry/skills/forge-lab/templates/requirements.yml` and write to `setup-automation/requirements.yml`
+→ Read `@foundry/templates/zero-touch/config/secrets.yaml` and write to `config/secrets.yaml`
 
-**Copy structure, modify for lab:**
-- `config/instances.yaml` - from `@forge-lab/templates/instances-aap-basic.yaml`
-  - Adjust VM count, names, cores/memory
-  - Keep ALL format patterns (tags, networks, userdata, CA cert, ports)
-- `config/firewall.yaml` - from `@forge-lab/templates/firewall.yaml`
-  - Add ports for additional services
-- `setup-automation/main.yml` - from `@forge-lab/templates/main.yml`
-  - Adjust host list if needed
-- `setup-automation/setup-control.sh` - from `@forge-lab/templates/setup-control.sh`
-  - Adjust requirements.yml collection list if needed
-- `setup-automation/setup-control-configure.sh` - from `@forge-lab/templates/setup-control-configure.sh`
-  - Modify inline playbook tasks for this lab's resources
-  - Keep module_defaults, validate_certs, env vars exactly as template
+### 4b. Copy structure, modify for this lab:
 
-**Generate from scratch:**
+→ Read `@foundry/skills/forge-lab/templates/instances-aap-basic.yaml`
+  Write to `config/instances.yaml`, adjusting VM names and count only.
+  Keep ALL patterns: tags key/value, networks, userdata, CA cert, ports list.
+
+→ Read `@foundry/skills/forge-lab/templates/firewall.yaml`
+  Write to `config/firewall.yaml`, adding ports for additional services.
+
+→ Read `@foundry/skills/forge-lab/templates/main.yml`
+  Write to `setup-automation/main.yml`, adjusting host list if needed.
+
+→ Read `@foundry/skills/forge-lab/templates/setup-control.sh`
+  Write to `setup-automation/setup-control.sh`, adjusting collections if needed.
+
+→ Read `@foundry/skills/forge-lab/templates/setup-control-configure.sh`
+  Write to `setup-automation/setup-control-configure.sh`.
+  Modify ONLY the inline playbook tasks for this lab's AAP resources.
+  Keep module_defaults, validate_certs, env var exports exactly as template.
+
+### 4c. Generate from scratch:
+
 - `ui-config.yml` - tabs with `external: false`, trailing slash on URLs
 - `site.yml` / `default-site.yml` - Antora config with nookbag theme
-- `content/antora.yml` - component descriptor
-- `content/modules/ROOT/nav.adoc` - navigation
-- `content/modules/ROOT/pages/*.adoc` - module content
+- `content/antora.yml`, `nav.adoc`, module pages
 - `.foundry.yml` - interview answers
 - `runtime-automation/module-NN/` - solve/validate stubs
 
