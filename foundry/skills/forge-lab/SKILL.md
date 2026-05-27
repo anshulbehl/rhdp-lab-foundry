@@ -393,6 +393,12 @@ Do NOT indent `- ports:` under `ingress:`.
 
 **config/instances.yaml** rules are documented in the instances.yaml.j2 template header.
 
+**setup-automation/setup-control.sh** must use `python3` for HTTP calls,
+NOT `curl`. The AAP controller image (`aap-2.6-*`) does not have `curl`
+installed. Use `python3 urllib.request` for all AAP API calls. Also
+remove `set -euo pipefail` or ensure all API calls handle failures
+gracefully.
+
 ## Container Route Limitation
 
 The Developer Experience CI (used for testing labs before AgnosticV onboarding)
