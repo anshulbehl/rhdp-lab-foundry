@@ -1,0 +1,113 @@
+---
+- name: Create inventory
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ../config/secrets.yaml
+
+  tasks:
+    - name: Add control host
+      ansible.builtin.add_host:
+        name: control
+        ansible_ssh_host: "{{ lookup('ansible.builtin.env', 'BASTION_HOST') }}"
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ah_token: "{{ ahtoken }}"
+
+    - name: Add managed nodes
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        ansible_ssh_host: "{{ item }}"
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+      loop:
+        - vscode
+        - node1
+
+- name: Setup non-controller nodes
+  hosts: all:!localhost:!control
+  gather_facts: false
+
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Create setup scripts directory
+      ansible.builtin.file:
+        path: /tmp/setup-scripts
+        state: directory
+        mode: "0755"
+
+    - name: Check if setup script exists for this host
+      ansible.builtin.stat:
+        path: "./setup-{{ inventory_hostname }}.sh"
+      delegate_to: localhost
+      register: r_script_test
+
+    - name: Copy setup script
+      when: r_script_test.stat.exists
+      ansible.builtin.copy:
+        src: "./setup-{{ inventory_hostname }}.sh"
+        dest: "/tmp/setup-scripts/setup-{{ inventory_hostname }}.sh"
+        mode: "0755"
+
+    - name: Run setup script
+      when: r_script_test.stat.exists
+      ansible.builtin.shell: >-
+        sh -x /tmp/setup-scripts/setup-{{ inventory_hostname }}.sh
+        > /tmp/setup-scripts/setup-{{ inventory_hostname }}.log 2>&1
+      become: true
+      register: r_result
+
+    - name: Fail if setup script failed
+      when:
+        - r_result is defined
+        - r_result.rc is defined
+        - r_result.rc != 0
+      ansible.builtin.fail:
+        msg: "Setup script failed for {{ inventory_hostname }}"
+
+- name: Setup control node (AAP-specific)
+  hosts: control
+  gather_facts: false
+
+  vars:
+    guid: "{{ lookup('ansible.builtin.env', 'GUID') }}"
+    domain: "{{ lookup('ansible.builtin.env', 'DOMAIN') }}"
+
+  tasks:
+    - name: Copy bootstrap script
+      ansible.builtin.copy:
+        src: ./setup-control.sh
+        dest: /tmp/setup-scripts/setup-control.sh
+        mode: "0755"
+
+    - name: Copy configure script
+      ansible.builtin.copy:
+        src: ./setup-control-configure.sh
+        dest: /tmp/setup-scripts/setup-control-configure.sh
+        mode: "0755"
+
+    - name: "Phase 1: Bootstrap (ansible.cfg, collections)"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control.sh
+        > /tmp/setup-scripts/setup-control.log 2>&1
+      become: true
+      environment:
+        AH_TOKEN: "{{ ah_token }}"
+
+    - name: "Phase 2: Configure AAP (credentials, inventory, project)"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control-configure.sh
+        > /tmp/setup-scripts/setup-control-configure.log 2>&1
+      become: true
+      environment:
+        GUID: "{{ guid }}"
+        DOMAIN: "{{ domain }}"

@@ -91,6 +91,20 @@ Show the user a summary table. Ask for confirmation before scaffolding.
 
 For each file, READ the template first, then modify only what's needed.
 
+### Blueprint Selection
+
+Choose the base template set based on interview answers:
+
+| Condition | Instances template | Configure template | Firewall template |
+|:----------|:-------------------|:-------------------|:------------------|
+| IDE=VSCode OR SCM=Gitea | `instances-aap-devtools.yaml` | `setup-control-configure-devtools.sh` | `firewall-devtools.yaml` |
+| Default (AAP + RHEL only) | `instances-aap-basic.yaml` | `setup-control-configure.sh` | `firewall.yaml` |
+
+The devtools blueprint includes: AAP controller + code-server VM (devtools-ansible image,
+8G, port 8080) + Gitea container (port 3000) + managed node(s). This gives students a
+complete development workflow: write playbooks in VS Code, push to Gitea, sync the
+project in AAP, and run jobs against managed nodes.
+
 ### 4a. Copy these files exactly (read then write, no changes):
 
 → Read `@foundry/skills/forge-lab/templates/networks.yaml` and write to `config/networks.yaml`
@@ -100,23 +114,42 @@ For each file, READ the template first, then modify only what's needed.
 
 ### 4b. Copy structure, modify for this lab:
 
-→ Read `@foundry/skills/forge-lab/templates/instances-aap-basic.yaml`
+**Choose instances template based on blueprint:**
+
+→ If devtools: Read `@foundry/skills/forge-lab/templates/instances-aap-devtools.yaml`
+→ If basic: Read `@foundry/skills/forge-lab/templates/instances-aap-basic.yaml`
   Write to `config/instances.yaml`, adjusting VM names and count only.
   Keep ALL patterns: tags key/value, networks, userdata, CA cert, ports list.
 
-→ Read `@foundry/skills/forge-lab/templates/firewall.yaml`
+**Choose firewall template based on blueprint:**
+
+→ If devtools: Read `@foundry/skills/forge-lab/templates/firewall-devtools.yaml`
+→ If basic: Read `@foundry/skills/forge-lab/templates/firewall.yaml`
   Write to `config/firewall.yaml`, adding ports for additional services.
 
-→ Read `@foundry/skills/forge-lab/templates/main.yml`
+**Choose main.yml template based on blueprint:**
+
+→ If devtools: Read `@foundry/skills/forge-lab/templates/main-devtools.yml`
+→ If basic: Read `@foundry/skills/forge-lab/templates/main.yml`
   Write to `setup-automation/main.yml`, adjusting host list if needed.
 
 → Read `@foundry/skills/forge-lab/templates/setup-control.sh`
   Write to `setup-automation/setup-control.sh`, adjusting collections if needed.
 
-→ Read `@foundry/skills/forge-lab/templates/setup-control-configure.sh`
+**Choose configure template based on blueprint:**
+
+→ If devtools: Read `@foundry/skills/forge-lab/templates/setup-control-configure-devtools.sh`
+→ If basic: Read `@foundry/skills/forge-lab/templates/setup-control-configure.sh`
   Write to `setup-automation/setup-control-configure.sh`.
   Modify ONLY the inline playbook tasks for this lab's AAP resources.
   Keep module_defaults, validate_certs, env var exports exactly as template.
+
+**If devtools blueprint, also generate:**
+
+→ Read `@foundry/skills/forge-lab/templates/setup-vscode.sh`
+  Write to `setup-automation/setup-vscode.sh`. Configures code-server
+  (bind 0.0.0.0:8080, auth: none), SSH keys, git config, and workspace.
+  Adjust workspace directory names for the specific lab topic.
 
 → Read `@foundry/skills/forge-lab/templates/runtime-main.yml`
   Write to `runtime-automation/main.yml`. Required for Showroom
@@ -133,7 +166,11 @@ name, Showroom returns 404.
 
 ### 4c. Generate from scratch:
 
-- `ui-config.yml` - tabs with `external: false`, trailing slash on URLs
+- `ui-config.yml` - tabs with `external: false`, trailing slash on URLs.
+  For devtools labs, include tabs for: AAP, VS Code, Gitea, Terminal (wetty_vscode).
+  VS Code tab URL: `https://vscode-${guid}.${domain}/`
+  Gitea tab URL: `https://gitea-${guid}.${domain}/`
+  Terminal wetty target: `/wetty_vscode` (connects to the vscode VM, not control)
 - `site.yml` / `default-site.yml` - Antora config with nookbag theme
 - `content/antora.yml`, `nav.adoc`, module pages
 - `.foundry.yml` - interview answers
