@@ -164,13 +164,16 @@ project in AAP, and run jobs against managed nodes.
 Showroom expects content at `/modules/` path. If you use any other
 name, Showroom returns 404.
 
+**Choose ui-config template based on blueprint:**
+
+→ If devtools: Read `@foundry/skills/forge-lab/templates/ui-config-devtools.yml`
+→ If basic: Read `@foundry/skills/forge-lab/templates/ui-config-basic.yml`
+  Write to `ui-config.yml`. Update module names, labels, and solveButton
+  to match this lab's modules. Keep `antora.name: modules` and
+  `antora.dir: www` exactly as template. NEVER omit these fields.
+
 ### 4c. Generate from scratch:
 
-- `ui-config.yml` - tabs with `external: false`, trailing slash on URLs.
-  For devtools labs, include tabs for: AAP, VS Code, Gitea, Terminal (wetty_vscode).
-  VS Code tab URL: `https://vscode-${guid}.${domain}/`
-  Gitea tab URL: `https://gitea-${guid}.${domain}/`
-  Terminal wetty target: `/wetty_vscode` (connects to the vscode VM, not control)
 - `site.yml` / `default-site.yml` - Antora config with nookbag theme
 - `content/antora.yml`, `nav.adoc`, module pages
 - `.foundry.yml` - interview answers
