@@ -1,0 +1,11 @@
+{
+  "name": "foundry",
+  "version": "0.2.0",
+  "description": "Scaffold and manage RHDP labs: zero-touch, AgnosticV, and Showroom. Infrastructure design, content generation, validation, and deployment health reporting.",
+  "author": {
+    "name": "Anshul Behl",
+    "email": "anshul@redhat.com"
+  },
+  "repository": "https://github.com/anshulbehl/rhdp-lab-foundry",
+  "license": "Apache-2.0"
+}

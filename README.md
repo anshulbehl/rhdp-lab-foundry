@@ -41,6 +41,17 @@ Lab Foundry is an orchestrator that composes with the existing RHDP Skills Marke
 /plugin install health@rhdp-marketplace
 ```
 
+## Update
+
+```bash
+# Refresh the marketplace index, then update the plugin
+/plugin marketplace update rhdp-lab-foundry
+/plugin update foundry@rhdp-lab-foundry
+
+# Or update everything at once
+/plugin update --all
+```
+
 ## Quick Start
 
 ```

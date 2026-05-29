@@ -30,10 +30,22 @@ Lab Foundry delegates to RHDP skills for content and catalog operations. Install
 /plugin install health@rhdp-marketplace
 ```
 
-### Update
+## Updating
+
+To update the marketplace index and then update the installed plugin:
 
 ```bash
-/plugin marketplace update
+# Refresh the marketplace index from GitHub
+/plugin marketplace update rhdp-lab-foundry
+
+# Update the installed plugin to the latest version
+/plugin update foundry@rhdp-lab-foundry
+```
+
+To update all installed plugins at once:
+
+```bash
+/plugin update --all
 ```
 
 ## Available Skills
