@@ -110,7 +110,7 @@ project in AAP, and run jobs against managed nodes.
 → Read `@foundry/skills/forge-lab/templates/networks.yaml` and write to `config/networks.yaml`
 → Read `@foundry/skills/forge-lab/templates/ansible.cfg` and write to `setup-automation/ansible.cfg`
 → Read `@foundry/skills/forge-lab/templates/requirements.yml` and write to `setup-automation/requirements.yml`
-→ Read `@foundry/templates/zero-touch/config/secrets.yaml` and write to `config/secrets.yaml`
+→ Read `@foundry/skills/forge-lab/templates/secrets.yaml` and write to `config/secrets.yaml`
 
 ### 4b. Copy structure, modify for this lab:
 
