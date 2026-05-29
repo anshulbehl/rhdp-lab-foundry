@@ -32,21 +32,14 @@ Lab Foundry delegates to RHDP skills for content and catalog operations. Install
 
 ## Updating
 
-To update the marketplace index and then update the installed plugin:
+To pick up a new version, reinstall the plugin. The plugin system resolves the current version from the marketplace index:
 
 ```bash
-# Refresh the marketplace index from GitHub
 /plugin marketplace update rhdp-lab-foundry
-
-# Update the installed plugin to the latest version
-/plugin update foundry@rhdp-lab-foundry
+/plugin install foundry@rhdp-lab-foundry
 ```
 
-To update all installed plugins at once:
-
-```bash
-/plugin update --all
-```
+Note: `/plugin` commands are only available in the Claude Code CLI (`claude` in a terminal), not the VSCode extension.
 
 ## Available Skills
 
